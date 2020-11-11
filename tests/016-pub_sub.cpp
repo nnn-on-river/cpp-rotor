@@ -77,7 +77,7 @@ TEST_CASE("ping-pong", "[supervisor]") {
     REQUIRE(sub1->received == 1);
     REQUIRE(sub2->received == 1);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
     REQUIRE(sup->get_leader_queue().size() == 0);

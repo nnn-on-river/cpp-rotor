@@ -192,7 +192,7 @@ TEST_CASE("on_initialize, on_start, simple on_shutdown (handled by plugin)", "[s
     CHECK(sup->active_timers.size() == 0);
     CHECK(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->shutdown_started == 1);
     REQUIRE(sup->shutdown_finished == 1);
@@ -226,7 +226,7 @@ TEST_CASE("on_initialize, on_start, simple on_shutdown", "[supervisor]") {
     REQUIRE(sup->active_timers.size() == 0);
     REQUIRE(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->shutdown_finished == 1);
     REQUIRE(sup->active_timers.size() == 0);
@@ -264,7 +264,7 @@ TEST_CASE("start/shutdown 1 child & 1 supervisor", "[supervisor]") {
     CHECK(!sup->init_ec);
     CHECK(sup->shutdown_child == nullptr);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(sup->get_state() == r::state_t::SHUT_DOWN);
     CHECK(act->access<rt::to::state>() == r::state_t::SHUT_DOWN);
@@ -282,7 +282,7 @@ TEST_CASE("custom subscription", "[supervisor]") {
     sup->do_process();
     CHECK(sup->received == 1);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(sup->get_state() == r::state_t::SHUT_DOWN);
 }
@@ -290,7 +290,7 @@ TEST_CASE("custom subscription", "[supervisor]") {
 TEST_CASE("shutdown immediately", "[supervisor]") {
     r::system_context_ptr_t system_context = new r::system_context_t();
     auto sup = system_context->create_supervisor<sample_sup3_t>().timeout(rt::default_timeout).finish();
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(sup->get_state() == r::state_t::SHUT_DOWN);
 }
@@ -301,7 +301,7 @@ TEST_CASE("self unsubscriber", "[actor]") {
     sup->do_process();
     CHECK(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(sup->get_state() == r::state_t::SHUT_DOWN);
 }
@@ -315,7 +315,7 @@ TEST_CASE("alternative address subscriber", "[actor]") {
     CHECK(act->get_state() == r::state_t::OPERATIONAL);
     CHECK(act->received == 1);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(sup->get_state() == r::state_t::SHUT_DOWN);
     CHECK(act->get_state() == r::state_t::SHUT_DOWN);
@@ -328,7 +328,7 @@ TEST_CASE("acquire resources on shutdown start", "[actor]") {
     sup->do_process();
     CHECK(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(act->get_state() == r::state_t::SHUTTING_DOWN);
 

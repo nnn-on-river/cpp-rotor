@@ -52,11 +52,11 @@ void supervisor_wx_t::start() noexcept {
     });
 }
 
-void supervisor_wx_t::shutdown() noexcept {
+void supervisor_wx_t::shutdown(const std::error_code &ec) noexcept {
     supervisor_ptr_t self{this};
-    handler->CallAfter([self = std::move(self)]() {
+    handler->CallAfter([self = std::move(self), ec = ec]() {
         auto &sup = *self;
-        sup.do_shutdown();
+        sup.do_shutdown(ec);
         sup.do_process();
     });
 }

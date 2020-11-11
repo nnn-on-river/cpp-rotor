@@ -95,7 +95,7 @@ TEST_CASE("two supervisors, different localities, shutdown 2nd", "[supervisor]")
     REQUIRE(sup2->shutdown_start_count == 0);
     REQUIRE(sup1->shutdown_start_count == 0);
 
-    sup2->do_shutdown();
+    sup2->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup2->do_process();
     REQUIRE(sup1->shutdown_start_count == 0);
     REQUIRE(sup1->shutdown_finish_count == 0);
@@ -124,7 +124,7 @@ TEST_CASE("two supervisors, different localities, shutdown 2nd", "[supervisor]")
     REQUIRE(sup2->shutdown_start_count == 1);
     REQUIRE(sup2->shutdown_finish_count == 1);
 
-    sup1->do_shutdown();
+    sup1->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup1->do_process();
     REQUIRE(sup1->get_state() == r::state_t::SHUT_DOWN);
     REQUIRE(sup1->shutdown_start_count == 1);
@@ -159,7 +159,7 @@ TEST_CASE("two supervisors, different localities, shutdown 1st", "[supervisor]")
     REQUIRE(sup1->get_state() == r::state_t::OPERATIONAL);
     REQUIRE(sup2->get_state() == r::state_t::OPERATIONAL);
 
-    sup1->do_shutdown();
+    sup1->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     while (!sup1->get_leader_queue().empty() || !sup2->get_leader_queue().empty()) {
         sup1->do_process();
         sup2->do_process();
@@ -196,7 +196,7 @@ TEST_CASE("two supervisors, same locality", "[supervisor]") {
     REQUIRE(sup2->init_start_count == 1);
     REQUIRE(sup2->init_finish_count == 1);
 
-    sup1->do_shutdown();
+    sup1->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup1->do_process();
 
     REQUIRE(sup1->get_state() == r::state_t::SHUT_DOWN);
@@ -240,7 +240,7 @@ TEST_CASE("two supervisors, down internal first, same locality", "[supervisor]")
     REQUIRE(sup2->get_state() == r::state_t::SHUT_DOWN);
     REQUIRE(sup1->get_state() == r::state_t::OPERATIONAL);
 
-    sup1->do_shutdown();
+    sup1->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup1->do_process();
     REQUIRE(sup1->get_state() == r::state_t::SHUT_DOWN);
 

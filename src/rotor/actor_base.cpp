@@ -28,9 +28,9 @@ actor_base_t::~actor_base_t() { assert(deactivating_plugins.empty()); }
 
 void actor_base_t::do_initialize(system_context_t *) noexcept { activate_plugins(); }
 
-void actor_base_t::do_shutdown() noexcept {
+void actor_base_t::do_shutdown(const std::error_code &ec) noexcept {
     if (state < state_t::SHUTTING_DOWN) {
-        send<payload::shutdown_trigger_t>(supervisor->address, address);
+        send<payload::shutdown_trigger_t>(supervisor->address, address, ec);
     }
 }
 
@@ -84,6 +84,7 @@ void actor_base_t::shutdown_finish() noexcept {
 
     // maybe delete plugins here?
     assert(deactivating_plugins.empty() && "plugin was not deactivated");
+    assert(timers_map.empty() && "no active timers");
     /*
     if (!deactivating_plugins.empty()) {
         auto p = *deactivating_plugins.begin();
@@ -212,4 +213,9 @@ void actor_base_t::on_timer_trigger(request_id_t request_id, bool cancelled) noe
         it->second->trigger(cancelled);
         timers_map.erase(it);
     }
+}
+
+void actor_base_t::assing_shutdown_reason(const std::error_code &ec) noexcept {
+    if (!shutdown_reason)
+        shutdown_reason = ec;
 }

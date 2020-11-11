@@ -92,7 +92,7 @@ struct actor_base_t : public arc_base_t<actor_base_t> {
     virtual void do_initialize(system_context_t *ctx) noexcept;
 
     /** \brief convenient method to send actor's supervisor shutdown trigger message */
-    virtual void do_shutdown() noexcept;
+    virtual void do_shutdown(const std::error_code &ec) noexcept;
 
     /** \brief actor is fully initialized and it's supervisor has sent signal to start
      *
@@ -319,6 +319,8 @@ struct actor_base_t : public arc_base_t<actor_base_t> {
     void start_timer(request_id_t request_id, const pt::time_duration &interval, Delegate &delegate,
                      Method method) noexcept;
 
+    void assing_shutdown_reason(const std::error_code &ec) noexcept;
+
     /** \brief suspended init request message */
     intrusive_ptr_t<message::init_request_t> init_request;
 
@@ -372,6 +374,8 @@ struct actor_base_t : public arc_base_t<actor_base_t> {
 
     /** \brief timer-id to timer-handler map */
     timers_map_t timers_map;
+
+    std::error_code shutdown_reason;
 
     friend struct plugin::plugin_base_t;
     friend struct plugin::lifetime_plugin_t;

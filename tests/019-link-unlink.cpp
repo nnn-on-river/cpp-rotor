@@ -87,25 +87,25 @@ TEST_CASE("client/server, common workflow", "[actor]") {
     REQUIRE(invoked);
 
     SECTION("simultaneous shutdown") {
-        sup->do_shutdown();
+        sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         sup->do_process();
     }
 
     SECTION("controlled shutdown") {
         SECTION("indirect client-initiated unlink via client-shutdown") {
-            act_c->do_shutdown();
+            act_c->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
             sup->do_process();
             CHECK(act_c->get_state() == r::state_t::SHUT_DOWN);
         }
 
         SECTION("indirect client-initiated unlink via server-shutdown") {
-            act_s->do_shutdown();
+            act_s->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
             sup->do_process();
             CHECK(act_s->get_state() == r::state_t::SHUT_DOWN);
             CHECK(act_c->get_state() == r::state_t::SHUT_DOWN);
         }
 
-        sup->do_shutdown();
+        sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         sup->do_process();
     }
 }
@@ -181,7 +181,7 @@ TEST_CASE("unlink", "[actor]") {
     REQUIRE(sup1->get_state() == r::state_t::OPERATIONAL);
 
     SECTION("unlink failure") {
-        act_s->do_shutdown();
+        act_s->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         sup1->do_process();
         REQUIRE(sup1->active_timers.size() == 2);
 
@@ -196,8 +196,8 @@ TEST_CASE("unlink", "[actor]") {
 
     SECTION("unlink-notify on unlink-request") {
         SECTION("client, then server") {
-            act_s->do_shutdown();
-            act_c->do_shutdown();
+            act_s->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
+            act_c->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
             sup2->do_process();
             sup1->do_process();
             sup2->do_process();
@@ -205,8 +205,8 @@ TEST_CASE("unlink", "[actor]") {
         }
 
         SECTION("server, then client") {
-            act_s->do_shutdown();
-            act_c->do_shutdown();
+            act_s->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
+            act_c->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
             sup1->do_process();
             sup2->do_process();
             sup1->do_process();
@@ -214,7 +214,7 @@ TEST_CASE("unlink", "[actor]") {
         }
     }
 
-    sup1->do_shutdown();
+    sup1->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     while (!sup1->get_leader_queue().empty() || !sup2->get_leader_queue().empty()) {
         sup1->do_process();
         sup2->do_process();
@@ -245,13 +245,13 @@ TEST_CASE("unlink reaction", "[actor]") {
     };
 
     sup->do_process();
-    act_s->do_shutdown();
+    act_s->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(unlink_req);
     REQUIRE(unlink_req->message_type == r::message::unlink_request_t::message_type);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
 }
@@ -276,7 +276,7 @@ TEST_CASE("auto-unlink on shutdown", "[actor]") {
 
     sup1->do_process();
     REQUIRE(act_c->get_state() == r::state_t::INITIALIZING);
-    act_c->do_shutdown();
+    act_c->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
 
     sup1->do_process();
     REQUIRE(act_c->get_state() == r::state_t::SHUT_DOWN);
@@ -285,7 +285,7 @@ TEST_CASE("auto-unlink on shutdown", "[actor]") {
     sup2->do_process();
     REQUIRE(sup2->get_state() == r::state_t::OPERATIONAL);
 
-    sup2->do_shutdown();
+    sup2->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup2->do_process();
     REQUIRE(sup2->get_state() == r::state_t::SHUT_DOWN);
 }
@@ -341,9 +341,9 @@ TEST_CASE("link to operational only", "[actor]") {
     CHECK(act_s1->get_state() == r::state_t::OPERATIONAL);
     CHECK(act_s2->get_state() == r::state_t::OPERATIONAL);
 
-    sup1->do_shutdown();
-    sup2->do_shutdown();
-    sup3->do_shutdown();
+    sup1->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
+    sup2->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
+    sup3->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     process_123();
 
     CHECK(act_c->get_state() == r::state_t::SHUT_DOWN);
@@ -374,8 +374,8 @@ TEST_CASE("unlink notify / response race", "[actor]") {
     }
     REQUIRE(sup1->get_state() == r::state_t::OPERATIONAL);
 
-    act_s->do_shutdown();
-    act_c->do_shutdown();
+    act_s->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
+    act_c->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup1->do_process();
 
     // extract unlink request to let it produce unlink notify
@@ -384,7 +384,7 @@ TEST_CASE("unlink notify / response race", "[actor]") {
     sup2->get_leader_queue().pop_back();
     sup2->do_process();
 
-    sup1->do_shutdown();
+    sup1->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     while (!sup1->get_leader_queue().empty() || !sup2->get_leader_queue().empty()) {
         sup1->do_process();
         sup2->do_process();
@@ -430,7 +430,7 @@ TEST_CASE("link errors", "[actor]") {
         sup2->do_process();
 
         act_s->access<rt::to::resources>()->acquire();
-        act_s->do_shutdown();
+        act_s->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         sup2->do_process();
         REQUIRE(act_s->get_state() == r::state_t::SHUTTING_DOWN);
 
@@ -455,7 +455,7 @@ TEST_CASE("link errors", "[actor]") {
             auto p1 = static_cast<r::plugin::link_client_plugin_t *>(plugin1);
             p1->link(act_s->get_address(), false, [&](auto &) {});
             act_c->access<rt::to::resources>()->acquire();
-            act_c->do_shutdown();
+            act_c->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
 
             process_12();
             CHECK(act_c->get_state() == r::state_t::SHUTTING_DOWN);
@@ -478,12 +478,12 @@ TEST_CASE("link errors", "[actor]") {
         CHECK(sup1->get_state() == r::state_t::OPERATIONAL);
         CHECK(sup2->get_state() == r::state_t::OPERATIONAL);
 
-        act_c->do_shutdown();
+        act_c->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         act_c->access<rt::to::resources>()->acquire();
         sup1->do_process();
         CHECK(act_c->get_state() == r::state_t::SHUTTING_DOWN);
 
-        act_s->do_shutdown();
+        act_s->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         sup2->do_process();
 
         sup1->do_process();
@@ -492,8 +492,8 @@ TEST_CASE("link errors", "[actor]") {
         process_12();
     }
 
-    sup1->do_shutdown();
-    sup2->do_shutdown();
+    sup1->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
+    sup2->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     process_12();
 
     CHECK(sup1->get_state() == r::state_t::SHUT_DOWN);
@@ -532,7 +532,7 @@ TEST_CASE("proper shutdown order, defined by linkage", "[actor]") {
     sup->do_process();
     REQUIRE(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
 

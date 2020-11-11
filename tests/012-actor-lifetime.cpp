@@ -101,7 +101,7 @@ TEST_CASE("actor litetimes", "[actor]") {
     sup->do_process();
     REQUIRE(act->get_state() == r::state_t::OPERATIONAL);
 
-    act->do_shutdown();
+    act->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(act->event_current == 6);
     CHECK(act->event_shutdown_finish == 5);
@@ -116,7 +116,7 @@ TEST_CASE("actor litetimes", "[actor]") {
     REQUIRE(destroyed == 1);
 
     /* for asan */
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
     REQUIRE(sup->get_leader_queue().size() == 0);
@@ -135,7 +135,7 @@ TEST_CASE("fail shutdown test", "[actor]") {
     REQUIRE(sup->active_timers.size() == 0);
 
     act->access<rt::to::resources>()->acquire();
-    act->do_shutdown();
+    act->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->active_timers.size() == 1); // "init child + shutdown children"
 
@@ -156,7 +156,7 @@ TEST_CASE("fail shutdown test", "[actor]") {
     act->access<rt::to::resources>()->release();
     act->shutdown_continue();
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->get_children_count() == 0);
 
@@ -188,7 +188,7 @@ TEST_CASE("fail initialize test", "[actor]") {
     sup->do_process();
     REQUIRE(sup->get_children_count() == 1); // just sup
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(act->get_state() == r::state_t::SHUT_DOWN);
     CHECK(sup->get_state() == r::state_t::SHUT_DOWN);
@@ -202,8 +202,8 @@ TEST_CASE("double shutdown test (actor)", "[actor]") {
 
     sup->do_process();
 
-    act->do_shutdown();
-    act->do_shutdown();
+    act->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
+    act->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     CHECK(act->event_current == 6);
@@ -212,7 +212,7 @@ TEST_CASE("double shutdown test (actor)", "[actor]") {
 
     REQUIRE(sup->get_children_count() == 1); // just sup
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 }
 
@@ -224,8 +224,8 @@ TEST_CASE("double shutdown test (supervisor)", "[actor]") {
 
     sup->do_process();
 
-    sup->do_shutdown();
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(sup->get_children_count() == 0);

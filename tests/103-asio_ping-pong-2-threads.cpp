@@ -44,14 +44,14 @@ struct pinger_t : public rt::actor_test_t {
 
     void shutdown_finish() noexcept override {
         r::actor_base_t::shutdown_finish();
-        supervisor->shutdown();
-        ponger_addr->supervisor.shutdown();
+        supervisor->shutdown(r::make_error_code(r::shutdown_code_t::normal));
+        ponger_addr->supervisor.shutdown(r::make_error_code(r::shutdown_code_t::normal));
         std::cout << "pinger shutdown finish\n";
     }
 
     void on_pong(r::message_t<pong_t> &) noexcept {
         ++pong_received;
-        do_shutdown();
+        do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     }
 
     void do_send_ping() {

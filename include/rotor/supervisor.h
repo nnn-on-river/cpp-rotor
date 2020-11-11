@@ -133,9 +133,9 @@ struct supervisor_t : public actor_base_t {
 
     /** \brief thread-safe version of `do_shutdown`, i.e. send shutdown request
      * let it be processed by the supervisor */
-    virtual void shutdown() noexcept = 0;
+    virtual void shutdown(const std::error_code &ec) noexcept = 0;
 
-    void do_shutdown() noexcept override;
+    void do_shutdown(const std::error_code &ec) noexcept override;
 
     /** \brief supervisor hook for reaction on child actor init */
     virtual void on_child_init(actor_base_t *actor, const std::error_code &ec) noexcept;

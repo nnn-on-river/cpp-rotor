@@ -43,7 +43,7 @@ std::string inspected_local_delivery_t::identify(message_base_t *message, std::i
     using boost::core::demangle;
     using T = owner_tag_t;
     std::string info = demangle((const char *)message->type_index);
-    std::int32_t level = 0;
+    std::int32_t level = 5;
     auto dump_point = [](subscription_point_t &p) -> std::string {
         std::stringstream out;
         out << " [";
@@ -85,9 +85,21 @@ std::string inspected_local_delivery_t::identify(message_base_t *message, std::i
         level = 9;
         info += dump_point(m->payload.point);
     } else if (auto m = dynamic_cast<message::deregistration_service_t *>(message); m) {
-        level = 0;
+        level = 2;
         info += ", service = ";
         info += m->payload.service_name;
+    } else if (auto m = dynamic_cast<message::shutdown_trigger_t *>(message); m) {
+        level = 1;
+        info += ", reason = ";
+        info += m->payload.shutdown_reason.message();
+        info += ", category = ";
+        info += m->payload.shutdown_reason.category().name();
+    } else if (auto m = dynamic_cast<message::shutdown_request_t *>(message); m) {
+        level = 1;
+        info += ", reason = ";
+        info += m->payload.request_payload.shutdown_reason.message();
+        info += ", category = ";
+        info += m->payload.request_payload.shutdown_reason.category().name();
     }
 
     if (level > threshold)

@@ -41,7 +41,7 @@ TEST_CASE("lambda handler", "[actor]") {
     REQUIRE(sup->active_timers.size() == 0);
     REQUIRE(actor->received == true);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);

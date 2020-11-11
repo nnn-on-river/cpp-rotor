@@ -98,7 +98,7 @@ struct child_manager_plugin_t : public plugin_base_t {
   private:
     bool has_initializing() const noexcept;
     void init_continue() noexcept;
-    void request_shutdown() noexcept;
+    void request_shutdown(const std::error_code &ec) noexcept;
 
     enum class request_state_t { NONE, SENT, CONFIRMED };
 

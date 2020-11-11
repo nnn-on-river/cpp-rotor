@@ -115,7 +115,7 @@ TEST_CASE("pinger & ponger on different supervisors, manually controlled", "[sup
     REQUIRE(ponger->ping_received == 1);
     REQUIRE(ponger->pong_sent == 1);
 
-    sup1->do_shutdown();
+    sup1->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     while (!sup1->get_leader_queue().empty() || !sup2->get_leader_queue().empty()) {
         sup1->do_process();
         sup2->do_process();
@@ -173,7 +173,7 @@ TEST_CASE("pinger & ponger on different supervisors, self controlled", "[supervi
     REQUIRE(ponger->ping_received == 1);
     REQUIRE(ponger->pong_sent == 1);
 
-    sup1->do_shutdown();
+    sup1->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     while (!sup1->get_leader_queue().empty() || !sup2->get_leader_queue().empty()) {
         sup1->do_process();
         sup2->do_process();

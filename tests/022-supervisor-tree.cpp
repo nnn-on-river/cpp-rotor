@@ -44,7 +44,7 @@ struct pinger_t : public r::actor_base_t {
             ponger_addr.reset();
             ping_sent++;
         } else if (attempts > 10) {
-            do_shutdown();
+            do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         } else {
             request_status();
         }
@@ -63,7 +63,7 @@ struct ponger_t : public r::actor_base_t {
 
     void on_ping(r::message_t<ping_t> &) noexcept {
         ping_received++;
-        do_shutdown();
+        do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     }
 };
 
@@ -119,7 +119,7 @@ TEST_CASE("supervisor/locality tree ", "[supervisor]") {
     REQUIRE(ping_sent == 1);
     REQUIRE(ping_received == 1);
 
-    sup_root->do_shutdown();
+    sup_root->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup_root->do_process();
 
     REQUIRE(sup_A2->get_state() == r::state_t::SHUT_DOWN);

@@ -61,10 +61,12 @@ void link_client_plugin_t::on_link_response(message::link_response_t &message) n
         servers_map.erase(it);
         auto &init_request = actor->access<to::init_request>();
         if (init_request) {
-            actor->reply_with_error(*init_request, ec);
+            actor->reply_with_error(*init_request, make_error_code(shutdown_code_t::link_failed));
             actor->access<to::init_request>().reset();
         } else if (actor->access<to::state>() == state_t::SHUTTING_DOWN) {
-            actor->do_shutdown();
+            // actor->do_shutdown(make_error_code());
+            // ??
+            actor->shutdown_continue();
         }
     } else {
         it->second.state = link_state_t::OPERATIONAL;
@@ -100,7 +102,7 @@ void link_client_plugin_t::try_forget_links(bool attempt_shutdown) noexcept {
             if (actor->access<to::state>() == rotor::state_t::SHUTTING_DOWN) {
                 actor->shutdown_continue();
             } else if (unlink_requested) {
-                actor->do_shutdown();
+                actor->do_shutdown(make_error_code(shutdown_code_t::unlink_requested));
             }
         }
     }

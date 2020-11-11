@@ -398,14 +398,14 @@ TEST_CASE("request-response successfull delivery", "[actor]") {
     REQUIRE(actor->res_val == 5);
     REQUIRE(actor->ec == r::error_code_t::success);
 
-    actor->do_shutdown();
+    actor->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->active_timers.size() == 0);
     std::size_t delta = 1; /* + shutdown confirmation triggered on self */
     REQUIRE(sup->get_points().size() == init_pts_count + delta);
     REQUIRE(sup->get_subscription().access<rt::to::mine_handlers>().size() == init_subs_count + delta);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
@@ -433,7 +433,7 @@ TEST_CASE("request-response successfull delivery indentical message to 2 actors"
     REQUIRE(actor2->res_val == 5);
     REQUIRE(actor2->ec == r::error_code_t::success);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
@@ -477,7 +477,7 @@ TEST_CASE("request-response timeout", "[actor]") {
     REQUIRE(actor->res_val == 0);
     REQUIRE(actor->ec == r::error_code_t::request_timeout);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
     REQUIRE(sup->get_leader_queue().size() == 0);
@@ -499,7 +499,7 @@ TEST_CASE("response with custom error", "[actor]") {
     REQUIRE(actor->ec == r::error_code_t::request_timeout);
     REQUIRE(sup->active_timers.size() == 0);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
     REQUIRE(sup->get_leader_queue().size() == 0);
@@ -518,7 +518,7 @@ TEST_CASE("request-response successfull delivery (supervisor)", "[supervisor]") 
     REQUIRE(sup->res_val == 5);
     REQUIRE(sup->ec == r::error_code_t::success);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
@@ -542,7 +542,7 @@ TEST_CASE("request-response successfull delivery, ref-counted response", "[actor
     REQUIRE(actor->res_val == 5);
     REQUIRE(actor->ec == r::error_code_t::success);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
@@ -566,7 +566,7 @@ TEST_CASE("request-response successfull delivery, twice", "[actor]") {
     REQUIRE(actor->res_val == 5 * 2);
     REQUIRE(actor->ec == r::error_code_t::success);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
@@ -590,7 +590,7 @@ TEST_CASE("responce is sent twice, but received once", "[supervisor]") {
     REQUIRE(actor->res_val == 5);
     REQUIRE(actor->ec == r::error_code_t::success);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
@@ -614,7 +614,7 @@ TEST_CASE("ref-counted response forwarding", "[actor]") {
     REQUIRE(actor->res_val == 5 + 5 * 2);
     REQUIRE(actor->back_req1_id == actor->back_req2_id);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
@@ -637,7 +637,7 @@ TEST_CASE("intrusive pointer request/responce", "[actor]") {
     REQUIRE(actor->req_val == 4 + 4 * 2);
     REQUIRE(actor->res_val == 5 + 5 * 2);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);

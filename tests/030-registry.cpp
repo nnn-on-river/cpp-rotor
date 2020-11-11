@@ -134,13 +134,13 @@ TEST_CASE("supervisor related tests", "[registry][supervisor]") {
         }
         CHECK(sup2->access<rt::to::registry>());
 
-        sup2->do_shutdown();
+        sup2->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         while (!sup->get_leader_queue().empty() || !sup2->get_leader_queue().empty()) {
             sup->do_process();
             sup2->do_process();
         }
     }
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 }
 
@@ -253,7 +253,7 @@ TEST_CASE("registry actor (server)", "[registry][supervisor]") {
         }
     }
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 }
 
@@ -283,7 +283,7 @@ TEST_CASE("registry plugin (client)", "[registry][supervisor]") {
         CHECK(act_c->get_state() == r::state_t::OPERATIONAL);
         CHECK(act_c->service_addr == act_s->get_address());
 
-        sup->do_shutdown();
+        sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         sup->do_process();
         CHECK(act_c->get_state() == r::state_t::SHUT_DOWN);
         CHECK(act_s->get_state() == r::state_t::SHUT_DOWN);
@@ -317,7 +317,7 @@ TEST_CASE("registry plugin (client)", "[registry][supervisor]") {
         CHECK(act_c->service_addr == act_s->get_address());
         CHECK(succeses == 2);
 
-        sup->do_shutdown();
+        sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         sup->do_process();
         CHECK(act_c->get_state() == r::state_t::SHUT_DOWN);
         CHECK(act_s->get_state() == r::state_t::SHUT_DOWN);
@@ -356,7 +356,7 @@ TEST_CASE("registry plugin (client)", "[registry][supervisor]") {
 
         SECTION("cancel promise") {
             CHECK(act_c->get_state() == r::state_t::INITIALIZING);
-            act_c->do_shutdown();
+            act_c->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
             sup->do_process();
             CHECK(act_c->get_state() == r::state_t::SHUT_DOWN);
             auto plugin = act_c->access<rt::to::get_plugin>(r::plugin::registry_plugin_t::class_identity);
@@ -365,7 +365,7 @@ TEST_CASE("registry plugin (client)", "[registry][supervisor]") {
             CHECK(dm.size() == 0);
         }
 
-        sup->do_shutdown();
+        sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         sup->do_process();
         CHECK(act_c->get_state() == r::state_t::SHUT_DOWN);
         CHECK(sup->get_state() == r::state_t::SHUT_DOWN);
@@ -431,7 +431,7 @@ TEST_CASE("no problems when supervisor registers self in a registry", "[registry
         CHECK(act->get_state() == r::state_t::OPERATIONAL);
     }
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(sup->get_state() == r::state_t::SHUT_DOWN);
 }

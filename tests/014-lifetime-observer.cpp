@@ -69,11 +69,11 @@ TEST_CASE("lifetime observer, same locality", "[actor]") {
     sup->do_process();
     REQUIRE(observer->event == 3);
 
-    sample_actor->do_shutdown();
+    sample_actor->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(observer->event == 7);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
     REQUIRE(sup->get_leader_queue().size() == 0);
@@ -110,7 +110,7 @@ TEST_CASE("lifetime observer, different localities", "[actor]") {
     CHECK(observer->access<rt::to::state>() == r::state_t::OPERATIONAL);
     CHECK(observer->event == 3);
 
-    sample_actor->do_shutdown();
+    sample_actor->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup2->do_process();
     sup1->do_process();
     sup2->do_process();
@@ -118,7 +118,7 @@ TEST_CASE("lifetime observer, different localities", "[actor]") {
 
     REQUIRE(observer->event == 7);
 
-    sup1->do_shutdown();
+    sup1->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup1->do_process();
     std::cout << "sup1->do_process()\n";
     sup2->do_process();

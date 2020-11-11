@@ -23,6 +23,7 @@ struct system_context {};
 struct policy {};
 struct parent {};
 struct synchronize_start {};
+struct assing_shutdown_reason {};
 } // namespace to
 } // namespace
 
@@ -36,6 +37,10 @@ template <> auto &supervisor_t::access<to::system_context>() noexcept { return c
 template <> auto &supervisor_t::access<to::policy>() noexcept { return policy; }
 template <> auto &supervisor_t::access<to::parent>() noexcept { return parent; }
 template <> auto &supervisor_t::access<to::synchronize_start>() noexcept { return synchronize_start; }
+template <>
+auto actor_base_t::access<to::assing_shutdown_reason, const std::error_code &>(const std::error_code &ec) noexcept {
+    assing_shutdown_reason(ec);
+}
 
 const void *child_manager_plugin_t::class_identity = static_cast<const void *>(typeid(child_manager_plugin_t).name());
 
@@ -72,27 +77,28 @@ void child_manager_plugin_t::remove_child(const actor_base_t &child) noexcept {
     actors_map.erase(it_actor);
     auto &state = actor->access<to::state>();
 
-    bool shutdown_self = false;
+    std::error_code shutdown_self_reason;
     bool init_self = false;
     if (state == state_t::INITIALIZING) {
         if (!child_started) {
             auto &policy = static_cast<supervisor_t *>(actor)->access<to::policy>();
             if (policy == supervisor_policy_t::shutdown_failed) {
-                actor->do_shutdown();
+                actor->do_shutdown(make_error_code(shutdown_code_t::supervisor_shutdown));
             } else {
-                shutdown_self = true;
+                shutdown_self_reason = make_error_code(shutdown_code_t::child_down);
             }
         } else {
             init_self = true;
         }
     }
     if (state == state_t::SHUTTING_DOWN) {
-        shutdown_self = true;
+        /* actually it does not matter */
+        shutdown_self_reason = make_error_code(shutdown_code_t::child_down);
     }
 
-    if (shutdown_self) {
+    if (shutdown_self_reason) {
         if (state != state_t::SHUTTING_DOWN) {
-            actor->do_shutdown();
+            actor->do_shutdown(shutdown_self_reason);
         } else if (actors_map.size() <= 1) {
             actor->shutdown_continue();
         }
@@ -138,10 +144,10 @@ void child_manager_plugin_t::on_init(message::init_response_t &message) noexcept
         auto shutdown_self = self_state == state_t::INITIALIZING && policy == supervisor_policy_t::shutdown_self;
         if (shutdown_self) {
             continue_init = false;
-            sup.do_shutdown();
+            sup.do_shutdown(make_error_code(shutdown_code_t::child_init_failed));
         } else {
             auto &timeout = static_cast<actor_base_t &>(sup).access<to::shutdown_timeout>();
-            sup.template request<payload::shutdown_request_t>(address).send(timeout);
+            sup.template request<payload::shutdown_request_t>(address, ec).send(timeout);
         }
     } else {
         /* the if is needed for the very rare case when supervisor was immediately shut down
@@ -166,15 +172,17 @@ void child_manager_plugin_t::on_init(message::init_response_t &message) noexcept
 void child_manager_plugin_t::on_shutdown_trigger(message::shutdown_trigger_t &message) noexcept {
     auto &sup = static_cast<supervisor_t &>(*actor);
     auto &source_addr = message.payload.actor_address;
+    auto &ec = message.payload.shutdown_reason;
     if (source_addr == static_cast<actor_base_t &>(sup).get_address()) {
         if (sup.access<to::parent>()) {
             // will be routed via shutdown request
-            sup.do_shutdown();
+            sup.do_shutdown(ec);
         } else {
             // do not do shutdown-request on self
             if (actor->access<to::state>() != state_t::SHUTTING_DOWN) {
+                actor->access<to::assing_shutdown_reason, const std::error_code &>(ec);
                 actor->shutdown_start();
-                request_shutdown();
+                request_shutdown(make_error_code(shutdown_code_t::supervisor_shutdown));
                 actor->shutdown_continue();
             }
         }
@@ -182,7 +190,7 @@ void child_manager_plugin_t::on_shutdown_trigger(message::shutdown_trigger_t &me
         auto &actor_state = actors_map.at(source_addr);
         if (actor_state.shutdown == request_state_t::NONE) {
             auto &timeout = actor->access<to::shutdown_timeout>();
-            sup.request<payload::shutdown_request_t>(source_addr).send(timeout);
+            sup.request<payload::shutdown_request_t>(source_addr, ec).send(timeout);
             actor_state.shutdown = request_state_t::SENT;
         }
     }
@@ -235,13 +243,13 @@ bool child_manager_plugin_t::handle_shutdown(message::shutdown_request_t *req) n
     /* prevent double sending req, i.e. from parent and from self */
     auto &self = actors_map.at(actor->get_address());
     self.shutdown = request_state_t::CONFIRMED;
-    request_shutdown();
+    request_shutdown(make_error_code(shutdown_code_t::supervisor_shutdown));
 
     /* only own actor left, which will be handled differently */
     return actors_map.size() == 1 && plugin_base_t::handle_shutdown(req);
 }
 
-void child_manager_plugin_t::request_shutdown() noexcept {
+void child_manager_plugin_t::request_shutdown(const std::error_code &ec) noexcept {
     auto &sup = static_cast<supervisor_t &>(*actor);
     for (auto &it : actors_map) {
         auto &actor_state = it.second;
@@ -251,7 +259,7 @@ void child_manager_plugin_t::request_shutdown() noexcept {
             auto &parent = sup.access<to::parent>();
             if ((actor_addr != address) || parent) {
                 auto &timeout = actor->access<to::shutdown_timeout>();
-                sup.request<payload::shutdown_request_t>(actor_addr).send(timeout);
+                sup.request<payload::shutdown_request_t>(actor_addr, ec).send(timeout);
                 actor_state.shutdown = request_state_t::SENT;
             } else {
                 actor_state.shutdown = request_state_t::CONFIRMED;

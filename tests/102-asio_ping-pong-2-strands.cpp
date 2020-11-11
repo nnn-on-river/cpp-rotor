@@ -42,7 +42,7 @@ struct pinger_t : public rt::actor_test_t {
 
     void on_pong(r::message_t<pong_t> &) noexcept {
         ++pong_received;
-        supervisor->shutdown();
+        supervisor->shutdown(r::make_error_code(r::shutdown_code_t::normal));
     }
 
     void do_send_ping() {

@@ -43,7 +43,7 @@ struct pinger_t : public r::actor_base_t {
 
     void on_pong(rotor::message_t<pong_t> &) noexcept {
         ++pong_received;
-        supervisor->shutdown();
+        supervisor->shutdown(r::make_error_code(r::shutdown_code_t::normal));
     }
 };
 

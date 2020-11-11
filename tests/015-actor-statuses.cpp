@@ -78,7 +78,7 @@ TEST_CASE("statuses observer", "[actor]") {
     sup->do_process();
     CHECK(observer->supervisor_status == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);

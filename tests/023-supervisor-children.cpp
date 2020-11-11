@@ -36,7 +36,7 @@ struct sample_actor_t : public rt::actor_test_t {
 struct fail_init_actor_t : public rt::actor_test_t {
     using rt::actor_test_t::actor_test_t;
 
-    void init_finish() noexcept override { supervisor->do_shutdown(); }
+    void init_finish() noexcept override { supervisor->do_shutdown(r::make_error_code(r::shutdown_code_t::normal)); }
 };
 
 struct fail_start_actor_t : public rt::actor_test_t {
@@ -44,7 +44,7 @@ struct fail_start_actor_t : public rt::actor_test_t {
 
     void on_start() noexcept override {
         rt::actor_test_t::on_start();
-        supervisor->do_shutdown();
+        supervisor->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     }
 };
 
@@ -55,7 +55,7 @@ struct fail_init_actor3_t : public rt::actor_test_t {
 
     void init_start() noexcept override {
         rt::actor_test_t::init_start();
-        do_shutdown();
+        do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     }
 };
 
@@ -63,7 +63,7 @@ struct fail_init_actor4_t : public rt::actor_test_t {
     using rt::actor_test_t::actor_test_t;
 
     void init_start() noexcept override {
-        do_shutdown();
+        do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         rt::actor_test_t::init_start();
     }
 };
@@ -72,7 +72,7 @@ struct fail_init_actor5_t : public rt::actor_test_t {
     using rt::actor_test_t::actor_test_t;
 
     void init_start() noexcept override {
-        supervisor->do_shutdown();
+        supervisor->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         rt::actor_test_t::init_start();
     }
 };
@@ -143,7 +143,7 @@ struct post_shutdown_actor_t : public rt::actor_test_t {
 
     void shutdown_start() noexcept override {
         rt::actor_test_t::shutdown_start();
-        do_shutdown();
+        do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     }
 };
 
@@ -151,7 +151,7 @@ struct pre_shutdown_actor_t : public rt::actor_test_t {
     using rt::actor_test_t::actor_test_t;
 
     void shutdown_start() noexcept override {
-        do_shutdown();
+        do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
         rt::actor_test_t::shutdown_start();
     }
 };
@@ -199,7 +199,7 @@ TEST_CASE("supervisor is not initialized, while it child did not confirmed initi
     REQUIRE(sup->get_state() == r::state_t::OPERATIONAL);
     REQUIRE(act->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 }
 
@@ -221,7 +221,7 @@ TEST_CASE("supervisor is not initialized, while it 1 of 2 children did not confi
     REQUIRE(act1->get_state() == r::state_t::OPERATIONAL);
     REQUIRE(act2->get_state() == r::state_t::INITIALIZING);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 }
 
@@ -265,7 +265,7 @@ TEST_CASE("supervisor create child during init phase", "[supervisor]") {
     REQUIRE(sup->get_state() == r::state_t::OPERATIONAL);
     REQUIRE(act->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 }
 
@@ -321,7 +321,7 @@ TEST_CASE("actor shutdown's self during start => supervisor is not affected", "[
     REQUIRE(act->get_state() == r::state_t::SHUT_DOWN);
     REQUIRE(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     REQUIRE(sup->get_state() == r::state_t::SHUT_DOWN);
 }
@@ -388,7 +388,7 @@ TEST_CASE("actor shutdown during init", "[supervisor]") {
     REQUIRE(act->get_state() == r::state_t::INITIALIZING);
     REQUIRE(sup->get_state() == r::state_t::INITIALIZING);
 
-    act->do_shutdown();
+    act->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     act->access<rt::to::resources>()->access<rt::to::resources>().clear();
     sup->do_process();
     REQUIRE(act->get_state() == r::state_t::SHUT_DOWN);
@@ -411,8 +411,8 @@ TEST_CASE("two actors shutdown during init", "[supervisor]") {
     REQUIRE(act2->get_state() == r::state_t::INITIALIZING);
     REQUIRE(sup->get_state() == r::state_t::INITIALIZING);
 
-    act1->do_shutdown();
-    act2->do_shutdown();
+    act1->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
+    act2->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     act1->access<rt::to::resources>()->access<rt::to::resources>().clear();
     act2->access<rt::to::resources>()->access<rt::to::resources>().clear();
 
@@ -431,7 +431,7 @@ TEST_CASE("double shutdown attempt (post)", "[supervisor]") {
     CHECK(act->get_state() == r::state_t::OPERATIONAL);
     CHECK(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(act->get_state() == r::state_t::SHUT_DOWN);
     CHECK(sup->get_state() == r::state_t::SHUT_DOWN);
@@ -446,7 +446,7 @@ TEST_CASE("double shutdown attempt (pre)", "[supervisor]") {
     CHECK(act->get_state() == r::state_t::OPERATIONAL);
     CHECK(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(act->get_state() == r::state_t::SHUT_DOWN);
     CHECK(sup->get_state() == r::state_t::SHUT_DOWN);
@@ -461,7 +461,7 @@ TEST_CASE("managed supervisor (autostart child)", "[supervisor]") {
     CHECK(act->get_state() == r::state_t::OPERATIONAL);
     CHECK(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(act->get_state() == r::state_t::SHUT_DOWN);
     CHECK(sup->get_state() == r::state_t::SHUT_DOWN);
@@ -476,7 +476,7 @@ TEST_CASE("failed to shutdown actor (1)", "[supervisor]") {
     CHECK(act->get_state() == r::state_t::OPERATIONAL);
     CHECK(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     CHECK(sup->active_timers.size() == 1);
@@ -499,7 +499,7 @@ TEST_CASE("failed to shutdown actor (2)", "[supervisor]") {
     CHECK(act->get_state() == r::state_t::OPERATIONAL);
     CHECK(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     REQUIRE(system_context.ec == r::error_code_t::actor_misconfigured);
@@ -519,7 +519,7 @@ TEST_CASE("failed to shutdown actor (3)", "[supervisor]") {
     CHECK(sup->get_state() == r::state_t::OPERATIONAL);
 
     act->access<rt::to::resources>()->acquire();
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 
     CHECK(sup->active_timers.size() == 1);
@@ -555,7 +555,7 @@ TEST_CASE("synchronized start", "[supervisor]") {
     CHECK(act2->get_state() == r::state_t::OPERATIONAL);
     CHECK(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 }
 
@@ -571,7 +571,7 @@ TEST_CASE("1 child is initializing, and another one started, and then shutted do
     CHECK(act2->get_state() == r::state_t::OPERATIONAL);
     CHECK(sup->get_state() == r::state_t::INITIALIZING);
 
-    act2->do_shutdown();
+    act2->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
     CHECK(act1->get_state() == r::state_t::INITIALIZING);
     CHECK(act2->get_state() == r::state_t::SHUT_DOWN);
@@ -582,6 +582,6 @@ TEST_CASE("1 child is initializing, and another one started, and then shutted do
     CHECK(act1->get_state() == r::state_t::OPERATIONAL);
     CHECK(sup->get_state() == r::state_t::OPERATIONAL);
 
-    sup->do_shutdown();
+    sup->do_shutdown(r::make_error_code(r::shutdown_code_t::normal));
     sup->do_process();
 }

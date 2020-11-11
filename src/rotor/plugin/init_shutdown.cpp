@@ -15,12 +15,17 @@ namespace to {
 struct state {};
 struct init_request {};
 struct shutdown_request {};
+struct assing_shutdown_reason {};
 } // namespace to
 } // namespace
 
 template <> auto &actor_base_t::access<to::state>() noexcept { return state; }
 template <> auto &actor_base_t::access<to::init_request>() noexcept { return init_request; }
 template <> auto &actor_base_t::access<to::shutdown_request>() noexcept { return shutdown_request; }
+template <>
+auto actor_base_t::access<to::assing_shutdown_reason, const std::error_code &>(const std::error_code &ec) noexcept {
+    assing_shutdown_reason(ec);
+}
 
 const void *init_shutdown_plugin_t::class_identity = static_cast<const void *>(typeid(init_shutdown_plugin_t).name());
 
@@ -49,7 +54,11 @@ void init_shutdown_plugin_t::on_shutdown(message::shutdown_request_t &msg) noexc
            (actor->access<to::state>() != state_t::SHUT_DOWN));
     // std::cout << "received shutdown_request for " << actor->address.get() << " from " << msg.payload.reply_to.get()
     // << "\n";
+    const std::error_code &ec = msg.payload.request_payload.shutdown_reason;
+
     actor->access<to::shutdown_request>().reset(&msg);
+    actor->access<to::assing_shutdown_reason, const std::error_code &>(ec);
+
     actor->shutdown_start();
     actor->shutdown_continue();
 }

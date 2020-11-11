@@ -47,10 +47,10 @@ void supervisor_t::do_initialize(system_context_t *ctx) noexcept {
     }
 }
 
-void supervisor_t::do_shutdown() noexcept {
+void supervisor_t::do_shutdown(const std::error_code &ec) noexcept {
     if (state < state_t::SHUTTING_DOWN) {
         auto upstream_sup = parent ? parent : this;
-        send<payload::shutdown_trigger_t>(upstream_sup->address, address);
+        send<payload::shutdown_trigger_t>(upstream_sup->address, address, ec);
     }
 }
 

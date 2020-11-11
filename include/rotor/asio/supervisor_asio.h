@@ -61,7 +61,7 @@ struct supervisor_asio_t : public supervisor_t {
     virtual address_ptr_t make_address() noexcept override;
 
     virtual void start() noexcept override;
-    virtual void shutdown() noexcept override;
+    virtual void shutdown(const std::error_code &ec) noexcept override;
     virtual void enqueue(message_ptr_t message) noexcept override;
     virtual void shutdown_finish() noexcept override;
 

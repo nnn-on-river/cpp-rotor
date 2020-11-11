@@ -33,7 +33,7 @@ struct self_shutdowner_sup_t : public re::supervisor_ev_t {
     void init_finish() noexcept override {
         re::supervisor_ev_t::init_finish();
         printf("triggering shutdown\n");
-        parent->shutdown();
+        parent->shutdown(r::make_error_code(r::shutdown_code_t::normal));
     }
 
     void shutdown_finish() noexcept override {
@@ -77,7 +77,7 @@ struct pinger_t : public r::actor_base_t {
 
     void on_pong(rotor::message_t<pong_t> &) noexcept {
         ++pong_received;
-        supervisor->shutdown();
+        supervisor->shutdown(r::make_error_code(r::shutdown_code_t::normal));
     }
 };
 
@@ -105,7 +105,7 @@ struct ponger_t : public r::actor_base_t {
 struct bad_actor_t : public r::actor_base_t {
     using r::actor_base_t::actor_base_t;
 
-    void on_start() noexcept override { supervisor->do_shutdown(); }
+    void on_start() noexcept override { supervisor->do_shutdown(r::make_error_code(r::shutdown_code_t::normal)); }
 
     void shutdown_finish() noexcept override {}
 };
@@ -163,7 +163,7 @@ TEST_CASE("no shutdown confirmation", "[supervisor][ev]") {
     REQUIRE(system_context->code.value() == static_cast<int>(r::error_code_t::request_timeout));
 
     // actor->force_cleanup();
-    sup->shutdown();
+    sup->shutdown(r::make_error_code(r::shutdown_code_t::normal));
     ev_run(loop);
 
     system_context.reset();

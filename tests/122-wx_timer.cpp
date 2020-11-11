@@ -46,7 +46,7 @@ struct bad_actor_t : public r::actor_base_t {
 
     void on_response(traits_t::response::message_t &msg) noexcept {
         ec = msg.payload.ec;
-        // alternative for supervisor.do_shutdown() for better coverage
+        // alternative for supervisor.do_shutdown(r::make_error_code(r::shutdown_code_t::normal)) for better coverage
         auto sup_addr = static_cast<r::actor_base_t *>(supervisor)->get_address();
         auto shutdown_trigger = r::make_message<r::payload::shutdown_trigger_t>(sup_addr, sup_addr);
         supervisor->enqueue(shutdown_trigger);

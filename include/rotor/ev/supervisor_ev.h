@@ -63,7 +63,7 @@ struct supervisor_ev_t : public supervisor_t {
     ~supervisor_ev_t();
 
     void start() noexcept override;
-    void shutdown() noexcept override;
+    void shutdown(const std::error_code &ec) noexcept override;
     void enqueue(message_ptr_t message) noexcept override;
     void shutdown_finish() noexcept override;
 

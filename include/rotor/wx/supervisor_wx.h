@@ -50,9 +50,8 @@ struct supervisor_wx_t : public supervisor_t {
     supervisor_wx_t(supervisor_config_wx_t &config);
 
     void start() noexcept override;
-    void shutdown() noexcept override;
+    void shutdown(const std::error_code &ec) noexcept override;
     void enqueue(message_ptr_t message) noexcept override;
-    // void on_timer_trigger(request_id_t timer_id) noexcept override;
 
     /** \brief returns pointer to the wx system context */
     inline system_context_wx_t *get_context() noexcept { return static_cast<system_context_wx_t *>(context); }
